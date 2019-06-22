@@ -1,0 +1,91 @@
+//.......................................................................ATTINY85 BASED POWER SUPPLY SKETCH...........................................................
+//Before any thing burn the bootloader "internal 16 MHz " for attiny 85;
+//initialize the library with the numbers of the interface pins
+//THE FUNCTION SHOULD BE IN ORDER shiftlcd(SER,SCK,RCK)
+//this sketch is written and debuging into arduino 1.6.4 versons only.
+//Power supply v 1.1
+//sketch written by MINTU NATH,kolkata 700137,india,21 JUNE 2019;
+
+#include <ShiftLCD.h>
+ShiftLCD lcd(0, 2, 1);
+float volt = 0.00;
+float temp = 0.00;
+int cur = 0;                         
+//float shunt = 1.00;
+int adc1 ;
+int adc2 ;
+
+void setup() 
+{
+  pinMode(A3,INPUT);
+  pinMode(A0,INPUT);
+  pinMode(4,OUTPUT);
+  digitalWrite(4,LOW);
+  lcd.begin(16, 2);                     // set up the LCD's number of rows and columns: 
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(" 0-35V VARIABLE ");
+  lcd.setCursor(0,1);
+  lcd.print("DC POWER SUPPLY");
+  delay(1500);
+  lcd.clear();
+  lcd.setCursor(0,1);
+  lcd.print("Starting..............");
+  delay(1000);
+}
+void loop() 
+{
+  adc1 = analogRead(A3);          //read analog voltage from ATTINY85 pin  for output voltage.
+  adc2 = analogRead(A0);          //read analog voltage from ATTINY85 pin 4 for output current.
+  digitalWrite(4,LOW);                   // use PNP transistor and buzzer in series.
+  temp = (adc1 * 5.0 / 1023.0); 
+  volt = (temp *11);   //FORMULA USED TO CONVERT THE VOLTAGE ,take voltage divider as a ratio of r1 100k and r2 10k .
+   
+  cur = map(adc2,460,1023,0,2600);       // converting current value from ADC;      
+  if ((volt > 0.1) && (cur > 1 ))
+   {
+    if (cur > 2000)
+  {                                    //function for shotcircuit and overcurrent protection
+   sort();
+  }
+  else
+  { 
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Voltage = ");               //prints the voltage value in the LCD display  
+    lcd.print(volt);
+    lcd.print("V");
+    lcd.setCursor(0,1);
+    lcd.print("Current = ");
+    lcd.print(cur);
+    lcd.print("mA");
+    delay(300);
+  }
+   }
+ else
+ {
+   volt = 0.00;
+   cur = 0;
+   lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Voltage = ");               //prints the voltage value in the LCD display  
+    lcd.print(volt);
+    lcd.print("V");
+    lcd.setCursor(0,1);
+    lcd.print("Current = ");
+    lcd.print(cur);
+    lcd.print("mA");
+    delay(300);
+ }
+}
+void sort()
+{
+  digitalWrite(4,HIGH);
+   lcd.clear();
+   lcd.setCursor(0,0);
+   lcd.print("  Short circuit  ");
+   lcd.setCursor(0,1);
+   lcd.print("  Applied  ");
+   delay(1500);
+}
+ 
